@@ -243,7 +243,7 @@ impl eframe::App for FanRgbApp {
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             ui.add(
                 egui::Label::new(
-                    "Note: This program requires sudo on a Framework Linux system.",
+                    "Note: This program must be ran as root and is linux only!",
                 )
                 .wrap(true),
             );
