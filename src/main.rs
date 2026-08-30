@@ -137,7 +137,7 @@ impl FanRgbApp {
             colors,
             status: Some(StatusMessage {
                 kind: StatusKind::Info,
-                text: "Pick your colors and settings, then press 'Write to controller'.".to_string(),
+                text: "Pick colors and settings, then press 'Write to controller'.".to_string(),
             }),
             lights_enabled: true,
             led_only: true,
