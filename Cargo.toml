@@ -1,15 +1,15 @@
 [package]
-name = "fwd_rgb"
+name = "cortinarius"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 env_logger = "0.11"
-framework_lib = { path = "framework_lib" }
+framework_lib = "0.6.5"
 eframe = "0.27"
 egui = "0.27"
 rand = "0.8"
 
 [[bin]]
-name = "fwd_rgb"
+name = "cortinarius"
 path = "src/main.rs"
