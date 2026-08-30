@@ -9,3 +9,7 @@ framework_lib = { path = "framework_lib" }
 eframe = "0.27"
 egui = "0.27"
 rand = "0.8"
+
+[[bin]]
+name = "fwd_rgb"
+path = "src/main.rs"
