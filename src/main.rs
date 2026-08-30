@@ -41,9 +41,6 @@ fn apply_colors(start_key: u8, colors: Vec<RgbS>) -> Result<(), EcError> {
 }
 
 /// Set the main fan's duty cycle (0-100%) using the Framework EC's `PwmSetFanDuty` command.
-///
-/// The standard Chromium EC payload for EC_CMD_PWM_SET_FAN_DUTY (0x0024) is a single
-/// packed struct: `struct ec_params_pwm_set_fan_duty { uint32_t percent; } __packed;`.
 /// Note this differs from the generic PWM_SET_DUTY command — fan duty takes only the
 /// percentage, with no leading index byte. This command returns no response body.
 fn set_fan_duty(duty_percent: u8) -> Result<(), EcError> {
@@ -330,7 +327,7 @@ impl eframe::App for FanRgbApp {
                 }
             });
 
-            ui.checkbox(&mut self.led_only, "LEDs only (skip fan override)");
+            ui.checkbox(&mut self.led_only, "write to LEDs only (skip fan override)");
 
             ui.separator();
             ui.horizontal(|ui| {
@@ -371,7 +368,7 @@ fn main() -> eframe::Result<()> {
     };
 
     eframe::run_native(
-        "Cortinarius - A Framework Desktop fan controller",
+        "Cortinarius: The Framework Desktop Fan Controller!",
         native_options,
         Box::new(|_cc| Box::new(FanRgbApp::new())),
     )
