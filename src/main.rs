@@ -3,7 +3,7 @@ use framework_lib::chromium_ec::CrosEcDriverType;
 use framework_lib::chromium_ec::commands::RgbS;
 use rand::Rng;
 
-use fwd_rgb::{apply_colors, format_ec_error, rgb_from_u32, rgb_to_hex_string};
+use cortinarius::{apply_colors, format_ec_error, rgb_from_u32, rgb_to_hex_string};
 
 const COLOR_COUNT: usize = 8;
 const PRESET_SPECTRUM: [u32; COLOR_COUNT] = [
@@ -430,7 +430,7 @@ fn main() -> eframe::Result<()> {
     };
 
     eframe::run_native(
-        "Framework Fan RGB",
+        "Cortinarius - A Framework Desktop fan controller",
         native_options,
         Box::new(|_cc| Box::new(FanRgbApp::new())),
     )
