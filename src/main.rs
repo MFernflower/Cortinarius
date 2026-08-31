@@ -3,29 +3,30 @@ use framework_lib::chromium_ec::{CrosEc, CrosEcDriver, EcError};
 use framework_lib::chromium_ec::commands::RgbS;
 
 const COLOR_COUNT: usize = 8;
+const START_KEY: u8 = 0;
 const PRESET_SPECTRUM: [u32; COLOR_COUNT] = [
     0xFF0000, 0xFF7F00, 0xFFFF00, 0x00FF00, 0x0000FF, 0x4B0082, 0x9400D3, 0xFFFFFF,
 ];
 const PRESET_MATRIX: [u32; COLOR_COUNT] = [
-    0x00FF66, 0x00CC44, 0x009933, 0x006622, 0x00FF99, 0x00CC66, 0x009944, 0x006633,
+    0x006622, 0x00FF66, 0x009944, 0x00CC44, 0x00CC66, 0x009933, 0x006633, 0x00FF99,
 ];
 const PRESET_AZURE: [u32; COLOR_COUNT] = [
-    0x0C0CFF, 0x1A1AFF, 0x2B2BFF, 0x3C3CFF, 0x1A4FFF, 0x2E5FFF, 0x4370FF, 0x5880FF,
+    0x2B2BFF, 0x0C0CFF, 0x4370FF, 0x1A1AFF, 0x5880FF, 0x3C3CFF, 0x2E5FFF, 0x1A4FFF,
 ];
 const PRESET_NEON_CITY: [u32; COLOR_COUNT] = [
-    0xFF00FF, 0x00FFFF, 0x9400D3, 0xFF0099, 0x00CCFF, 0x8A2BE2, 0xFF1493, 0x00BFFF,
+    0xFF0099, 0xFF00FF, 0x8A2BE2, 0x00FFFF, 0xFF1493, 0x00CCFF, 0x9400D3, 0x00BFFF,
 ];
 const PRESET_SOLAR_FLARE: [u32; COLOR_COUNT] = [
-    0xFF4500, 0xFF8C00, 0xFFA500, 0xFFD700, 0xFF6347, 0xFF7F50, 0xFFD700, 0xFFFF00,
+    0xFFD700, 0xFF4500, 0xFF7F50, 0xFFA500, 0xFFFF00, 0xFF8C00, 0xFF6347, 0xFFD700,
 ];
 const PRESET_ABYSS: [u32; COLOR_COUNT] = [
-    0x000080, 0x00008B, 0x191970, 0x0000CD, 0x4169E1, 0x0000FF, 0x1E90FF, 0x00BFFF,
+    0x0000FF, 0x191970, 0x4169E1, 0x000080, 0x1E90FF, 0x00008B, 0x00BFFF, 0x0000CD,
 ];
 const PRESET_CANOPY: [u32; COLOR_COUNT] = [
-    0x006400, 0x228B22, 0x32CD32, 0x90EE90, 0x008000, 0x6B8E23, 0x556B2F, 0x8FBC8F,
+    0x32CD32, 0x006400, 0x8FBC8F, 0x228B22, 0x556B2F, 0x90EE90, 0x6B8E23, 0x008000,
 ];
 const PRESET_CYANO: [u32; COLOR_COUNT] = [
-    0x001A33, 0x00334D, 0x004D66, 0x006680, 0x00807A, 0x1A9C6E, 0x33B862, 0x4DD556,
+    0x006680, 0x001A33, 0x4DD556, 0x00334D, 0x1A9C6E, 0x00807A, 0x33B862, 0x004D66,
 ];
 
 /// Convert a raw 24-bit RGB value into the EC payload struct.
@@ -38,9 +39,9 @@ fn rgb_from_u32(value: u32) -> RgbS {
 }
 
 /// Apply RGB colors starting at a given key index using the Framework EC.
-fn apply_colors(start_key: u8, colors: Vec<RgbS>) -> Result<(), EcError> {
+fn apply_colors(colors: Vec<RgbS>) -> Result<(), EcError> {
     let ec = CrosEc::new();
-    ec.rgbkbd_set_color(start_key, colors)
+    ec.rgbkbd_set_color(START_KEY, colors)
 }
 
 /// Set the main fan's duty cycle (0-100%) using the Framework EC's `PwmSetFanDuty` command.
@@ -110,7 +111,6 @@ struct StatusMessage {
 }
 
 struct FanRgbApp {
-    start_key: u8,
     fan_duty: u8,
     colors: [egui::Color32; COLOR_COUNT],
     status: Option<StatusMessage>,
@@ -130,7 +130,6 @@ impl FanRgbApp {
             .unwrap_or([egui::Color32::BLACK; COLOR_COUNT]);
 
         Self {
-            start_key: 0,
             // 0 means "no fan choice made yet" — the fan is only written once the
             // user explicitly picks 50% or 100%, so we never surprise them.
             fan_duty: 0,
@@ -187,15 +186,15 @@ impl FanRgbApp {
         }
 
         // Colors step: report success with a combined message.
-        match apply_colors(self.start_key, self.current_colors()) {
+        match apply_colors(self.current_colors()) {
             Ok(()) => self.set_status(
                 StatusKind::Success,
                 if self.led_only {
-                    format!("Wrote {} colors at key {}", COLOR_COUNT, self.start_key)
+                    format!("Wrote {} colors", COLOR_COUNT)
                 } else {
                     format!(
-                        "Wrote {} colors at key {}, main fan at {}%",
-                        COLOR_COUNT, self.start_key, self.fan_duty
+                        "Wrote {} colors, main fan at {}%",
+                        COLOR_COUNT, self.fan_duty
                     )
                 },
             ),
@@ -205,7 +204,7 @@ impl FanRgbApp {
 
     fn turn_off_lights(&mut self) -> Result<String, String> {
         let off = vec![RgbS { r: 0, g: 0, b: 0 }; COLOR_COUNT];
-        apply_colors(self.start_key, off)
+        apply_colors(off)
             .map(|_| "Fan lighting disabled".to_string())
             .map_err(|err| format_ec_error(&err))
     }
@@ -232,6 +231,9 @@ impl eframe::App for FanRgbApp {
             .show(ctx, |ui| {
                 ui.heading("Presets");
 
+                if ui.button("Spectrum").clicked() {
+                    self.apply_palette(&PRESET_SPECTRUM);
+                }
                 if ui.button("Matrix").clicked() {
                     self.apply_palette(&PRESET_MATRIX);
                 }
@@ -256,15 +258,6 @@ impl eframe::App for FanRgbApp {
             });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.horizontal(|ui| {
-                ui.label("Start key");
-                ui.add(
-                    egui::Slider::new(&mut self.start_key, 0..=255)
-                        .text("index")
-                        .clamp_to_range(true),
-                );
-            });
-
             ui.separator();
             ui.heading("Colors");
 
