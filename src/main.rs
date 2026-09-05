@@ -28,6 +28,9 @@ const PRESET_CANOPY: [u32; COLOR_COUNT] = [
 const PRESET_CYANO: [u32; COLOR_COUNT] = [
     0x006680, 0x001A33, 0x4DD556, 0x00334D, 0x1A9C6E, 0x00807A, 0x33B862, 0x004D66,
 ];
+const PRESET_ALGA: [u32; COLOR_COUNT] = [
+    0x006680, 0x0C0CFF, 0x4DD556, 0x1A1AFF, 0x1A9C6E, 0x3C3CFF, 0x33B862, 0x1A4FFF,
+];
 
 /// Convert a raw 24-bit RGB value into the EC payload struct.
 fn rgb_from_u32(value: u32) -> RgbS {
@@ -254,6 +257,9 @@ impl eframe::App for FanRgbApp {
                 }
                 if ui.button("Cyanobacteria").clicked() {
                     self.apply_palette(&PRESET_CYANO);
+                }
+                if ui.button("Alga").clicked() {
+                    self.apply_palette(&PRESET_ALGA);
                 }
             });
 
